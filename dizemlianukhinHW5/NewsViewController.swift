@@ -8,6 +8,7 @@
 import UIKit
 
 class NewsViewController: UIViewController {
+    
     // MARK: - Variables
     private var tableView: UITableView!
     private var articles: [ArticleModel] = []
