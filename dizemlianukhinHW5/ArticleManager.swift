@@ -33,36 +33,26 @@ struct NewsPage: Decodable {
     var news: [ArticleModel]?
     var requestId: String?
     
-    // MARK: - Lifecycle
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        requestId = try container.decodeIfPresent(String.self, forKey: .requestId)
-        
-        news = try container.decodeIfPresent([ArticleModel].self, forKey: .news)
-        
-        if let requestId = requestId {
-            news = news?.map { article in
-                var updatedArticle = article
-                updatedArticle.requestId = requestId
-                return updatedArticle
-            }
+    mutating func passTheRequestId() {
+        for i in 0..<(news?.count ?? 0) {
+            news?[i].requestId = requestId
         }
-    }
-    
-    private enum CodingKeys: String, CodingKey {
-        case news, requestId
     }
 }
 
+// MARK: - ArticleManagerDelegate
 protocol ArticleManagerDelegate: AnyObject {
     func didUpdateArticles(_ articles: [ArticleModel])
 }
 
+// MARK: - ArticleManager
 class ArticleManager {
+    // MARK: - Variables
     weak var delegate: ArticleManagerDelegate?
 
     private var articles: [ArticleModel] = []
+    private let decoder: JSONDecoder = JSONDecoder()
+    private var newsPage: NewsPage = NewsPage()
 
     func getArticles() -> [ArticleModel] {
         return articles
@@ -71,6 +61,29 @@ class ArticleManager {
     func addArticle(_ article: ArticleModel) {
         articles.append(article)
         delegate?.didUpdateArticles(articles)
+    }
+    
+    private func getURL(_ rubric: Int, _ pageIndex: Int) -> URL? {
+        URL(string: "https://news.myseldon.com/api/Section?rubricId=\(rubric)&pageSize=8&pageIndex=\(pageIndex)")
+    }
+    
+    // MARK: - Fetch news
+    private func fetchNews() {
+        guard let url = getURL(4, 1) else { return }
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            if let error = error {
+                print(error)
+                return
+            }
+            if
+                let self,
+                let data = data,
+                var newsPage = try? decoder.decode(NewsPage.self, from: data)
+            {
+                newsPage.passTheRequestId()
+                self.newsPage = newsPage
+            }
+        }.resume()
     }
 }
 
