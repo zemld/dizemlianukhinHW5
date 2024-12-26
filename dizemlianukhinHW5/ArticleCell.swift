@@ -22,11 +22,12 @@ final class ArticleCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Methods
     func configure(article: ArticleModel) {
         articleTitle.text = article.title
         articleDescription.text = article.announce
 
-        if let imageURL = article.articleUrl {
+        if let imageURL = article.img?.url {
             loadImage(from: imageURL)
         } else {
             articleImage.image = nil

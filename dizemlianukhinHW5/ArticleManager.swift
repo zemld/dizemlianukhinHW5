@@ -56,7 +56,7 @@ final class ArticleManager {
 
     // MARK: - Lifecycle
     init() {
-        fetchNews()
+        fetchNews(completion: updateArticles)
     }
     
     // MARK: - Methods
@@ -80,20 +80,27 @@ final class ArticleManager {
     }
     
     // MARK: - Fetch news
-    private func fetchNews() {
-        guard let url = getURL(4, 1) else { return }
+    private func fetchNews(completion: @escaping ([ArticleModel]) -> Void) {
+        guard let url = getURL(4, 1) else {
+            completion([])
+            return
+        }
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             if let error = error {
                 print(error)
+                completion([])
                 return
             }
             if
-                let self,
+                let self = self,
                 let data = data,
                 var newsPage = try? decoder.decode(NewsPage.self, from: data)
             {
-                newsPage.passTheRequestId()
-                self.articles = newsPage.news ?? []
+                DispatchQueue.main.async {
+                    newsPage.passTheRequestId()
+                    self.newsPage = newsPage
+                    completion(newsPage.news ?? [])
+                }
             }
         }.resume()
     }

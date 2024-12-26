@@ -53,6 +53,9 @@ final class NewsViewController: UIViewController {
     }
     
     private func configureWebView() {
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        webView.isHidden = true
+        
         view.addSubview(webView)
         webView.pinHorizontal(to: view)
         webView.pinTop(to: view.safeAreaLayoutGuide.topAnchor)
@@ -125,10 +128,10 @@ extension NewsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ArticleCell", for: indexPath)
-        guard cell is ArticleCell else { return cell }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ArticleCell", for: indexPath) as! ArticleCell
         let article = articleManager.getArticles()[indexPath.row]
-        cell.textLabel?.text = article.title
+        print(article)
+        cell.configure(article: article)
         return cell
     }
     
@@ -143,8 +146,8 @@ extension NewsViewController: UITableViewDataSource {
 // MARK: - ArticleManagerDelegate
 extension NewsViewController : ArticleManagerDelegate {
     func didUpdateArticles(_ articles: [ArticleModel]) {
-        DispatchQueue.main.async {
-            self.articleManager.updateArticles(articles)
+        DispatchQueue.main.async { [weak self] in
+            self?.tableView.reloadData()
         }
     }
 }
