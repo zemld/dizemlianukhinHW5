@@ -46,7 +46,7 @@ protocol ArticleManagerDelegate: AnyObject {
 }
 
 // MARK: - ArticleManager
-class ArticleManager {
+final class ArticleManager {
     // MARK: - Variables
     weak var delegate: ArticleManagerDelegate?
 
@@ -54,6 +54,12 @@ class ArticleManager {
     private let decoder: JSONDecoder = JSONDecoder()
     private var newsPage: NewsPage = NewsPage()
 
+    // MARK: - Lifecycle
+    init() {
+        fetchNews()
+    }
+    
+    // MARK: - Methods
     func getArticles() -> [ArticleModel] {
         return articles
     }
@@ -63,8 +69,14 @@ class ArticleManager {
         delegate?.didUpdateArticles(articles)
     }
     
+    func updateArticles(_ articles: [ArticleModel]) {
+        self.articles = articles
+        delegate?.didUpdateArticles(articles)
+    }
+    
     private func getURL(_ rubric: Int, _ pageIndex: Int) -> URL? {
-        URL(string: "https://news.myseldon.com/api/Section?rubricId=\(rubric)&pageSize=8&pageIndex=\(pageIndex)")
+        let url = "https://news.myseldon.com/api/Section?rubricId=\(rubric)&pageSize=8&pageIndex=\(pageIndex)"
+        return URL(string: url)
     }
     
     // MARK: - Fetch news
@@ -81,14 +93,8 @@ class ArticleManager {
                 var newsPage = try? decoder.decode(NewsPage.self, from: data)
             {
                 newsPage.passTheRequestId()
-                self.newsPage = newsPage
+                self.articles = newsPage.news ?? []
             }
         }.resume()
-    }
-}
-
-extension NewsViewController : ArticleManagerDelegate {
-    func didUpdateArticles(_ articles: [ArticleModel]) {
-        
     }
 }
